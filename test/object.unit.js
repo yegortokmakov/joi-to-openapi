@@ -1672,7 +1672,7 @@ describe("Joi Object to OpenAPI", () => {
                 required: ["status"]
               },
               identifier: {
-                $ref: "#/components/schemas/1"
+                anyOf: [{ $ref: "#/components/schemas/1" }, { type: "string", enum: [""] }]
               }
             },
             required: ["from", "body"]
@@ -1690,7 +1690,7 @@ describe("Joi Object to OpenAPI", () => {
                 properties: {}
               },
               identifier: {
-                $ref: "#/components/schemas/1"
+                anyOf: [{ $ref: "#/components/schemas/1" }, { type: "string", enum: [""] }]
               }
             },
             required: ["from", "body", "identifier"]
