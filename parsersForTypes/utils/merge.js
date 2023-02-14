@@ -104,9 +104,8 @@ const mergeRef = (obj1, obj2) => {
 };
 
 const wrapAlternative = (obj, mode = "any") => {
-  const key = `${mode}Of`;
   return {
-    [key]: obj[key] ? obj[key] : [obj]
+    [`${mode}Of`]: obj
   };
 };
 
@@ -117,17 +116,17 @@ const merge = (obj1, obj2, state, convert = a => a) => {
   let object1 = deepcopy(obj1);
   let object2 = deepcopy(obj2);
 
-  if (object1.oneOf || object2.oneOf) {
-    object1 = wrapAlternative(object1, "one");
-    object2 = wrapAlternative(object2, "one");
+  if (object1.oneOf && object2.oneOf) {
+    object1 = wrapAlternative(object1.oneOf, "one");
+    object2 = wrapAlternative(object2.oneOf, "one");
+  }
+  if (object1.allOf && object2.allOf) {
+    object1 = wrapAlternative(object1.allOf, "all");
+    object2 = wrapAlternative(object2.allOf, "all");
   }
   if (object1.anyOf || object2.anyOf) {
-    object1 = wrapAlternative(object1);
-    object2 = wrapAlternative(object2);
-  }
-  if (object1.allOf || object2.allOf) {
-    object1 = wrapAlternative(object1, "all");
-    object2 = wrapAlternative(object2, "all");
+    object1 = wrapAlternative(object1.anyOf ?? object1.oneOf ?? object1.allOf ?? [object1]);
+    object2 = wrapAlternative(object2.anyOf ?? object2.oneOf ?? object2.allOf ?? [object2]);
   }
   if (object1.$ref) {
     object1 = convert(retrieveReferenceFollow(object1, state, convert), state);

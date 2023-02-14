@@ -1,6 +1,7 @@
 const chai = require("chai");
 
 const { expect } = chai;
+const JoiObj = require("joi");
 
 const chaiAsPromised = require("chai-as-promised");
 const sinonChai = require("sinon-chai");
@@ -9,70 +10,68 @@ const { convert } = require("../index");
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-const Joi = require("joi")
-  .extend(joi => ({
-    base: joi.any(),
-    type: "opt"
-  }))
-  .extend(joi => ({
-    base: joi.opt(),
-    type: "opt",
-    messages: {
-      "opt.alternative": "{{#q}}"
-    },
-    rules: {
-      alternative: {
-        // convert: true,
-        method(alternatives) {
-          return this.$_addRule({
-            name: "alternative",
-            args: { alternatives }
-          });
-        },
-        args: [
-          {
-            name: "alternatives",
-            assert: value => typeof value === "object",
-            message: "must be an object"
-          }
-        ],
-        validate(value, helpers, args, options) {
-          const type = value.type || "";
-          const target = args.alternative[type];
-
-          if (!target) {
-            const error = helpers.error(`opt.alternative`, {});
-            error.local = {
-              ...error.local,
-              q: `"target" with type ${type} is not supported`
-            };
-
-            return error;
-          }
-          const internalOptions = Object.assign(options, {
-            abortEarly: false,
-            context: { ...helpers.prefs.context }
-          });
-
-          const tagertValidation = target.validate(value, internalOptions);
-
-          if (tagertValidation.error) {
-            const error = helpers.error(`opt.alternative`, {
-              details: tagertValidation.error.details,
-              q: tagertValidation.error.details[0].message
-            });
-
-            return error;
-          }
-
-          return value;
+const Joi = JoiObj.extend(joi => ({
+  base: joi.any(),
+  type: "opt"
+})).extend(joi => ({
+  base: joi.opt(),
+  type: "opt",
+  messages: {
+    "opt.alternative": "{{#q}}"
+  },
+  rules: {
+    alternative: {
+      // convert: true,
+      method(alternatives) {
+        return this.$_addRule({
+          name: "alternative",
+          args: { alternatives }
+        });
+      },
+      args: [
+        {
+          name: "alternatives",
+          assert: value => typeof value === "object",
+          message: "must be an object"
         }
+      ],
+      validate(value, helpers, args, options) {
+        const type = value.type || "";
+        const target = args.alternative[type];
+
+        if (!target) {
+          const error = helpers.error(`opt.alternative`, {});
+          error.local = {
+            ...error.local,
+            q: `"target" with type ${type} is not supported`
+          };
+
+          return error;
+        }
+        const internalOptions = Object.assign(options, {
+          abortEarly: false,
+          context: { ...helpers.prefs.context }
+        });
+
+        const tagertValidation = target.validate(value, internalOptions);
+
+        if (tagertValidation.error) {
+          const error = helpers.error(`opt.alternative`, {
+            details: tagertValidation.error.details,
+            q: tagertValidation.error.details[0].message
+          });
+
+          return error;
+        }
+
+        return value;
       }
     }
-  }));
+  }
+}));
 
 describe("Joi Options to OpenAPI", () => {
-  beforeEach(() => { });
+  beforeEach(() => {});
 
   describe("When .when is applied to options extension", () => {
     let obj;

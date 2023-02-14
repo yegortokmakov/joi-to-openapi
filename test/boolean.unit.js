@@ -1,6 +1,7 @@
 const chai = require("chai");
 
 const { expect } = chai;
+const Joi = require("joi");
 
 const chaiAsPromised = require("chai-as-promised");
 const sinonChai = require("sinon-chai");
@@ -8,8 +9,6 @@ const { convert } = require("../index");
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
-
-const Joi = require("joi");
 
 describe("Joi Boolean to OpenAPI", () => {
   beforeEach(() => {});
@@ -21,7 +20,7 @@ describe("Joi Boolean to OpenAPI", () => {
     beforeEach(() => {
       obj = Joi.boolean();
       expectedObj = {
-        type: "boolean",
+        type: "boolean"
       };
     });
 

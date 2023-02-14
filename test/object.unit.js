@@ -47,6 +47,70 @@ describe("Joi Object to OpenAPI", () => {
       expect(convert(obj)).deep.equal(expectedObj));
   });
 
+  describe("When simple object is used with allow of different type", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.object().allow("test");
+      expectedObj = {
+        anyOf: [
+          {
+            type: "object",
+            additionalProperties: true
+          },
+          {
+            type: "string",
+            enum: ["test"]
+          }
+        ]
+      };
+    });
+
+    it("should convert the object in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When simple object is used with allow with another object", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.object().allow(
+        Joi.object()
+          .keys({
+            code: Joi.string().valid("500", "300", "200"),
+            text: Joi.string()
+          })
+          .unknown()
+      );
+      expectedObj = {
+        anyOf: [
+          {
+            type: "object",
+            additionalProperties: true
+          },
+          {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              code: {
+                type: "string",
+                enum: ["500", "300", "200"]
+              },
+              text: {
+                type: "string"
+              }
+            }
+          }
+        ]
+      };
+    });
+
+    it("should convert the object in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
   describe("When object with empty set of keys", () => {
     let obj;
     let expectedObj;

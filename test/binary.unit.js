@@ -1,6 +1,7 @@
 const chai = require("chai");
 
 const { expect } = chai;
+const Joi = require("joi");
 
 const chaiAsPromised = require("chai-as-promised");
 const sinonChai = require("sinon-chai");
@@ -8,8 +9,6 @@ const { convert } = require("../index");
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
-
-const Joi = require("joi");
 
 describe("Joi Binary to OpenAPI", () => {
   beforeEach(() => {});
@@ -22,7 +21,7 @@ describe("Joi Binary to OpenAPI", () => {
       obj = Joi.binary();
       expectedObj = {
         type: "string",
-        format: "binary",
+        format: "binary"
       };
     });
 
@@ -38,7 +37,7 @@ describe("Joi Binary to OpenAPI", () => {
       obj = Joi.binary().encoding("base64");
       expectedObj = {
         type: "string",
-        format: "byte",
+        format: "byte"
       };
     });
 
@@ -56,7 +55,7 @@ describe("Joi Binary to OpenAPI", () => {
         type: "string",
         format: "binary",
         minLength: 10,
-        maxLength: 10,
+        maxLength: 10
       };
     });
 
@@ -73,7 +72,7 @@ describe("Joi Binary to OpenAPI", () => {
       expectedObj = {
         type: "string",
         format: "binary",
-        minLength: 10,
+        minLength: 10
       };
     });
 
@@ -90,7 +89,7 @@ describe("Joi Binary to OpenAPI", () => {
       expectedObj = {
         type: "string",
         format: "binary",
-        maxLength: 10,
+        maxLength: 10
       };
     });
 

@@ -50,13 +50,15 @@ const convertIs = (joiObj, valids, state, convert) => {
   return undefined;
 };
 
-const values = joiSchema => {
+const values = (joiSchema, state, convert) => {
   if (joiSchema._valids && joiSchema._valids._values.size) {
     const validValues = Array.from(joiSchema._valids._values);
     return validValues.reduce((acc, value) => {
       if (value !== null) {
-        const type = typeof value;
-        return { ...acc, [type]: [...(acc[type] ?? []), value] };
+        const [type, val] = isJoi(value)
+          ? [value.type, convert(value, state)]
+          : [typeof value, value];
+        return { ...acc, [type]: [...(acc[type] ?? []), val] };
       }
       return acc;
     }, {});
@@ -64,20 +66,9 @@ const values = joiSchema => {
   return {};
 };
 
-const mapSupportedType = joiSchema => {
-  const { type } = joiSchema;
+const isEnumerableType = type => type === "number" || type === "string" || type === "boolean";
 
-  switch (type) {
-    case "number":
-    case "string":
-    case "boolean":
-      return type;
-    default:
-      return "not_supported";
-  }
-};
-
-const filterEmpyValue = vals => _.partition(vals, v => v !== "");
+const partitionEmptyValue = vals => _.partition(vals, v => v !== "");
 
 const mergeEmptyValue = (openApiObj, empty) => {
   const [emptyValue] = empty;
@@ -107,39 +98,75 @@ const mergeEmptyValue = (openApiObj, empty) => {
   }
 };
 
-const addAllows = (joiSchema, openApiObj) => {
-  const _openApiObj = openApiObj;
+const buildNumberAlternatives = obj => {
+  const { minimum, maximum, enum: vals, ...rest } = obj;
 
+  if (!vals || (!minimum && !maximum)) return obj;
+
+  const valuesNotInInternal = vals.filter(num => num > maximum || num < minimum);
+  const oneOf = {
+    ...rest,
+    minimum,
+    maximum
+  };
+
+  if (valuesNotInInternal.length > 0) {
+    return {
+      oneOf: [
+        oneOf,
+        {
+          ...rest,
+          enum: valuesNotInInternal
+        }
+      ]
+    };
+  }
+  return oneOf;
+};
+
+const addAllows = (joiSchema, openApiObj, state, convert) => {
+  let _openApiObj = openApiObj;
+  const { type } = joiSchema;
   if (joiSchema._valids) {
     joiSchema._valids._values.delete(null);
 
-    const supportedType = mapSupportedType(joiSchema);
-    const vals = values(joiSchema);
-    return Object.entries(vals).reduce((acc, [itemType, item]) => {
-      let _obj = acc;
+    const vals = Object.entries(values(joiSchema, state, convert));
+    if (vals.length === 0) return _openApiObj;
 
-      if (itemType === supportedType) {
-        const [alternativesValues, empty] = filterEmpyValue(vals[supportedType]);
-        if (alternativesValues.length > 0) _obj.enum = alternativesValues;
-        _obj = mergeEmptyValue(_obj, empty);
-      } else {
-        switch (itemType) {
-          case "string":
-            _obj = merge(_obj, { anyOf: [{ type: "string", enum: item }] });
-            break;
-          case "boolean":
-            _obj = merge(_obj, { anyOf: [{ type: "boolean", enum: item }] });
-            break;
+    const [sameType, differentTypes] = _.partition(vals, v => v[0] === type);
+    if (sameType.length > 0) {
+      if (isEnumerableType(type)) {
+        const [alternativesValues, empty] = partitionEmptyValue(sameType[0][1]);
+        let unumeration;
+        if (alternativesValues.length > 0) unumeration = { enum: alternativesValues };
+
+        const objWithEmpty = mergeEmptyValue({ ..._openApiObj, ...unumeration }, empty);
+        switch (type) {
           case "number":
-            _obj = merge(_obj, { anyOf: [{ type: "number", enum: item }] });
+            _openApiObj = buildNumberAlternatives(objWithEmpty);
             break;
           default:
-            break;
+            _openApiObj = objWithEmpty;
         }
+      } else {
+        _openApiObj = merge(_openApiObj, { anyOf: [sameType[0][1][0]] });
       }
-      return _obj;
+    }
+
+    return differentTypes.reduce((acc, [itemType, item]) => {
+      switch (itemType) {
+        case "string":
+          return merge(acc, { anyOf: [{ type: "string", enum: item }] });
+        case "boolean":
+          return merge(acc, { anyOf: [{ type: "boolean", enum: item }] });
+        case "number":
+          return merge(acc, { anyOf: [{ type: "number", enum: item }] });
+        default:
+          return merge(acc, { anyOf: item });
+      }
     }, _openApiObj);
   }
+
   return _openApiObj;
 };
 

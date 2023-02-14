@@ -2,7 +2,6 @@ const chai = require("chai");
 
 const { expect } = chai;
 const Joi = require("joi");
-
 const chaiAsPromised = require("chai-as-promised");
 const sinonChai = require("sinon-chai");
 const { convert } = require("../index");
@@ -23,6 +22,69 @@ describe("Joi Array to OpenAPI", () => {
           type: "string",
           enum: ["a", "b"]
         }
+      };
+    });
+
+    it("should be converted in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When an array is given with allow of different type", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.array().items(Joi.string().valid("a", "b")).allow(1);
+      expectedObj = {
+        anyOf: [
+          {
+            type: "array",
+            items: {
+              type: "string",
+              enum: ["a", "b"]
+            }
+          },
+          {
+            type: "number",
+            enum: [1]
+          }
+        ]
+      };
+    });
+
+    it("should be converted in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When an array is given with allow with same type", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.array()
+        .items(Joi.string().valid("a", "b"))
+        .allow(Joi.array().items(Joi.string().valid(1, 2)));
+      expectedObj = {
+        anyOf: [
+          {
+            type: "array",
+            items: {
+              type: "string",
+              enum: ["a", "b"]
+            }
+          },
+          {
+            type: "array",
+            items: {
+              anyOf: [
+                {
+                  type: "string"
+                },
+                { type: "number", enum: [1, 2] }
+              ]
+            }
+          }
+        ]
       };
     });
 

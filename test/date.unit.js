@@ -1,6 +1,7 @@
 const chai = require("chai");
 
 const { expect } = chai;
+const Joi = require("joi");
 
 const chaiAsPromised = require("chai-as-promised");
 const sinonChai = require("sinon-chai");
@@ -8,8 +9,6 @@ const { convert } = require("../index");
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
-
-const Joi = require("joi");
 
 describe("Joi date to OpenAPI", () => {
   beforeEach(() => {});
@@ -22,7 +21,7 @@ describe("Joi date to OpenAPI", () => {
       obj = Joi.date();
       expectedObj = {
         type: "string",
-        format: "date-time",
+        format: "date-time"
       };
     });
 
@@ -37,7 +36,7 @@ describe("Joi date to OpenAPI", () => {
     beforeEach(() => {
       obj = Joi.date().timestamp();
       expectedObj = {
-        type: "integer",
+        type: "integer"
       };
     });
 

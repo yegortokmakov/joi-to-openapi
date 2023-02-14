@@ -1,4 +1,5 @@
 const chai = require("chai");
+const Joi = require("joi");
 
 const { expect } = chai;
 
@@ -8,8 +9,6 @@ const { convert } = require("../index");
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
-
-const Joi = require("joi");
 
 describe("Joi Number to OpenAPI", () => {
   beforeEach(() => {});
@@ -22,7 +21,7 @@ describe("Joi Number to OpenAPI", () => {
       obj = Joi.number();
       expectedObj = {
         type: "number",
-        format: "float",
+        format: "float"
       };
     });
 
@@ -39,7 +38,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        enum: [20, 30],
+        enum: [20, 30]
       };
     });
 
@@ -56,7 +55,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        example: 10,
+        example: 10
       };
     });
 
@@ -69,13 +68,11 @@ describe("Joi Number to OpenAPI", () => {
     let expectedObj;
 
     beforeEach(() => {
-      obj = Joi.number()
-        .example(10)
-        .example(20);
+      obj = Joi.number().example(10).example(20);
       expectedObj = {
         type: "number",
         format: "float",
-        examples: [10, 20],
+        examples: [10, 20]
       };
     });
 
@@ -92,7 +89,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        description: "This is a test",
+        description: "This is a test"
       };
     });
 
@@ -109,7 +106,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        title: "This is a test",
+        title: "This is a test"
       };
     });
 
@@ -126,7 +123,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        default: 1,
+        default: 1
       };
     });
 
@@ -141,7 +138,7 @@ describe("Joi Number to OpenAPI", () => {
     beforeEach(() => {
       obj = Joi.number().integer();
       expectedObj = {
-        type: "integer",
+        type: "integer"
       };
     });
 
@@ -157,7 +154,7 @@ describe("Joi Number to OpenAPI", () => {
       obj = Joi.number().precision(2);
       expectedObj = {
         type: "number",
-        format: "double",
+        format: "double"
       };
     });
 
@@ -170,14 +167,12 @@ describe("Joi Number to OpenAPI", () => {
     let expectedObj;
 
     beforeEach(() => {
-      obj = Joi.number()
-        .max(10)
-        .min(5);
+      obj = Joi.number().max(10).min(5);
       expectedObj = {
         type: "number",
         format: "float",
         minimum: 5,
-        maximum: 10,
+        maximum: 10
       };
     });
 
@@ -194,7 +189,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        minimum: 1,
+        minimum: 1
       };
     });
 
@@ -211,7 +206,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        maximum: -1,
+        maximum: -1
       };
     });
 
@@ -228,7 +223,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        minimum: 6,
+        minimum: 6
       };
     });
 
@@ -245,7 +240,7 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        maximum: 9,
+        maximum: 9
       };
     });
 
@@ -262,7 +257,110 @@ describe("Joi Number to OpenAPI", () => {
       expectedObj = {
         type: "number",
         format: "float",
-        nullable: true,
+        nullable: true
+      };
+    });
+
+    it("should be converted in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When a number max, min and value not in the interval", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.number().max(10).min(5).allow(-1);
+      expectedObj = {
+        oneOf: [
+          {
+            type: "number",
+            format: "float",
+            minimum: 5,
+            maximum: 10
+          },
+          {
+            type: "number",
+            format: "float",
+            enum: [-1]
+          }
+        ]
+      };
+    });
+
+    it("should be converted in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When a number max, min and multiple allows (with different types) not in the interval", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.number().max(10).min(5).allow("test").allow(20).allow(23).allow(-1);
+      expectedObj = {
+        anyOf: [
+          {
+            type: "number",
+            format: "float",
+            minimum: 5,
+            maximum: 10
+          },
+          {
+            type: "number",
+            format: "float",
+            enum: [20, 23, -1]
+          },
+          {
+            type: "string",
+            enum: ["test"]
+          }
+        ]
+      };
+    });
+
+    it("should be converted in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When a number max, min and multiple allows not in the interval", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.number().max(10).min(5).allow(-1).allow(20);
+      expectedObj = {
+        oneOf: [
+          {
+            type: "number",
+            format: "float",
+            minimum: 5,
+            maximum: 10
+          },
+          {
+            type: "number",
+            format: "float",
+            enum: [-1, 20]
+          }
+        ]
+      };
+    });
+
+    it("should be converted in the proper open-api", () =>
+      expect(convert(obj)).deep.equal(expectedObj));
+  });
+
+  describe("When a number max, min and value in the interval", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.number().max(10).min(5).allow(10);
+      expectedObj = {
+        type: "number",
+        format: "float",
+        minimum: 5,
+        maximum: 10
       };
     });
 

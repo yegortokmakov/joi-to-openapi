@@ -110,7 +110,9 @@ const convertAux = (joiSchema, state) => {
       swaggerSchema = extensionParser(joiSchema, newState, convertAux);
   }
 
-  return swaggerSchema ? addAllows(joiSchema, Object.assign(swaggerSchema, decorator)) : undefined;
+  return swaggerSchema
+    ? addAllows(joiSchema, Object.assign(swaggerSchema, decorator), newState, convertAux)
+    : undefined;
 };
 
 const convert = (joiSchema, state = {}) => convertAux(joiSchema, state);
