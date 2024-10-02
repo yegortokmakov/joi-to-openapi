@@ -208,7 +208,7 @@ const getStoredKeyFromOption = (_option, objChildren, state, convert) => {
   return option;
 };
 
-const isEnumAllowed = obj => obj.type === "string" || obj.type === "number";
+const isEnumAllowed = obj => obj.type === "string" || obj.type === "number" || obj.type === "boolean";
 const isExistenceCondition = obj => isEnumAllowed(obj) && !obj.enum;
 
 const groupByOptions = (opts, objChildren, state, convert) => {
