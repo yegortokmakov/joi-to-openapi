@@ -82,7 +82,7 @@ const mergeEmptyValue = (openApiObj, empty) => {
         return { anyOf: [_openApiObj, { type: "string", enum: [emptyValue] }] };
       }
       if (isEnum && typeof _openApiObj.minLength === "undefined") {
-        const newEnum = _openApiObj.enum.filter(val => val === emptyValue);
+        const newEnum = _openApiObj.enum.filter(val => val !== emptyValue);
         _openApiObj.enum = [...newEnum, emptyValue];
         return _openApiObj;
       }

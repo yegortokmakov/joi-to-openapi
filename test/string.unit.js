@@ -317,6 +317,24 @@ describe("Joi String to OpenAPI", () => {
       expect(convert(obj)).deep.equal(expectedObj));
   });
 
+  describe("When a string with empty and non-empty allow", () => {
+    let obj;
+    let expectedObj;
+
+    beforeEach(() => {
+      obj = Joi.string().allow("test2").allow("", "test");
+      expectedObj = {
+        type: "string",
+        enum: ["test2", "test", ""]
+      };
+    });
+
+    it("should be converted in the proper open-api", () => {
+      cobj = convert(obj);
+      expect(convert(obj)).deep.equal(expectedObj);
+    });
+  });
+
   describe("When a string with iso date", () => {
     let obj;
     let expectedObj;
